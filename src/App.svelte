@@ -1,6 +1,6 @@
 <script>
   let videos = [];
-  let currentVideo = null;
+  let selectedVideo = null;
 
   // ฟังก์ชันรับไฟล์วิดีโอ
   function handleFileUpload(event) {
@@ -12,118 +12,192 @@
     videos = [...videos, ...newVideos];
   }
 
-  // ฟังก์ชันเมื่อกดเลือกวิดีโอให้เล่น
-  function selectVideo(video) {
-    currentVideo = video;
+  // ฟังก์ชันกดเลือกวิดีโอเพื่อเล่น
+  function openVideo(video) {
+    selectedVideo = video;
+  }
+
+  // ฟังก์ชันปิดตัวเล่นวิดีโอ
+  function closeVideo() {
+    selectedVideo = null;
   }
 </script>
 
 <main class="container">
-  <header>
-    <h1>► AZAN</h1>
+  <!-- หัวข้อหลัก -->
+  <header class="header">
+    <div class="menu-icon">≡</div>
+    <h1 class="title">AZAN</h1>
     <label class="upload-btn">
-      + อัปโหลดวิดีโอ
+      + อัปโหลด
       <input type="file" accept="video/*" multiple on:change={handleFileUpload} hidden />
     </label>
   </header>
 
-  <!-- ส่วนเล่นวิดีโอที่เลือก (จะไม่เล่นอัตโนมัติจนกว่าจะกด Play) -->
-  {#if currentVideo}
-    <section class="player-section">
-      <h2>กำลังเล่น: {currentVideo.name}</h2>
-      <video src={currentVideo.url} controls autoplay class="main-player">
-        <track kind="captions" />
-      </video>
-    </section>
+  <!-- หน้าต่างเล่นวิดีโอ (จะแสดงเมื่อกดคลิกเลือกวิดีโอในตาราง) -->
+  {#if selectedVideo}
+    <div class="modal-backdrop" on:click={closeVideo}>
+      <div class="modal-content" on:click|stopPropagation>
+        <div class="modal-header">
+          <h3>{selectedVideo.name}</h3>
+          <button class="close-btn" on:click={closeVideo}>✕</button>
+        </div>
+        <video src={selectedVideo.url} controls class="video-player">
+          <track kind="captions" />
+        </video>
+      </div>
+    </div>
   {/if}
 
-  <!-- ส่วนตารางรายการวิดีโอ (Grid Layout) -->
-  <section class="grid-section">
-    <h3>รายการวิดีโอทั้งหมด ({videos.length})</h3>
-    
+  <!-- ตาราง 2 คอลัมน์ตามรูปวาด -->
+  <div class="grid-container">
     {#if videos.length === 0}
-      <p class="empty-text">ยังไม่มีวิดีโอ กดปุ่ม "+ อัปโหลดวิดีโอ" เพื่อเพิ่มไฟล์</p>
+      <div class="empty-box">ยังไม่มีวิดีโอ กดปุ่ม "+ อัปโหลด" ด้านบน</div>
     {:else}
-      <div class="video-grid">
-        {#each videos as video}
-          <button class="video-card" on:click={() => selectVideo(video)}>
-            <div class="thumbnail-placeholder">
-              <span class="play-icon">▶</span>
-            </div>
-            <p class="video-name">{video.name}</p>
-          </button>
-        {/each}
-      </div>
+      {#each videos as video, index}
+        <button class="video-card" on:click={() => openVideo(video)}>
+          <div class="thumbnail">
+            <span class="play-btn">▶</span>
+          </div>
+          <p class="video-label">วิดีโอ {index + 1}: {video.name}</p>
+        </button>
+      {/each}
     {/if}
-  </section>
+  </div>
 </main>
 
 <style>
   .container {
-    max-width: 800px;
+    max-width: 600px;
     margin: 0 auto;
-    padding: 16px;
+    padding: 12px;
+    background: #121212;
+    min-height: 100vh;
     color: #fff;
     font-family: sans-serif;
   }
-  header {
+
+  /* ส่วน Header ด้านบน */
+  .header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    border-bottom: 2px solid #333;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .menu-icon {
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .title {
+    font-size: 22px;
+    margin: 0;
   }
   .upload-btn {
     background: #e50914;
-    padding: 8px 16px;
+    padding: 6px 14px;
     border-radius: 6px;
-    cursor: pointer;
+    font-size: 14px;
     font-weight: bold;
+    cursor: pointer;
   }
-  .main-player {
-    width: 100%;
-    max-height: 400px;
-    border-radius: 8px;
-    background: #000;
-  }
-  /* การจัดตารางแบบ Grid เลื่อนลง */
-  .video-grid {
+
+  /* ตาราง 2 คอลัมน์ (Grid 2 Columns) */
+  .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
-    margin-top: 12px;
+    grid-template-columns: 1fr 1fr; /* แบ่ง 2 ฝั่งเท่ากัน */
+    gap: 12px;
   }
+
   .video-card {
-    background: #222;
+    background: #1e1e1e;
     border: 1px solid #333;
     border-radius: 8px;
     padding: 8px;
-    text-align: center;
+    text-align: left;
     cursor: pointer;
-    color: #fff;
+    color: white;
   }
-  .video-card:hover {
+  .video-card:active {
     background: #333;
   }
-  .thumbnail-placeholder {
-    height: 90px;
-    background: #111;
-    border-radius: 4px;
+
+  .thumbnail {
+    width: 100%;
+    height: 100px;
+    background: #000;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
     margin-bottom: 8px;
   }
-  .video-name {
-    font-size: 12px;
+  .play-btn {
+    font-size: 24px;
+    color: #fff;
+    opacity: 0.8;
+  }
+
+  .video-label {
+    font-size: 13px;
+    margin: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin: 0;
   }
-  .empty-text {
-    color: #888;
+
+  .empty-box {
+    grid-column: span 2;
     text-align: center;
-    margin-top: 40px;
+    color: #777;
+    padding: 40px 0;
+  }
+
+  /* Pop-up เวลาสแกน/กดคลิกดูวิดีโอ */
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 16px;
+  }
+  .modal-content {
+    background: #222;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #111;
+  }
+  .modal-header h3 {
+    margin: 0;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  .video-player {
+    width: 100%;
+    display: block;
   }
 </style>
